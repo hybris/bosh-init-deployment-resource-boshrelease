@@ -162,7 +162,7 @@ jobs:
           resource: git-release
           trigger: false
         - get: resource-image
-          passed: [build-docker-resource-image, unit-test]
+          passed: [build-docker-resource-image]
           params: {rootfs: true}
           trigger: false
       - task: add-image-blob
@@ -188,6 +188,7 @@ jobs:
     plan:
       - get: bosh-init-deployment-resource
         resource: git-resource
+        passed: [unit-test]
         trigger: true
       - put: resource-image
         params:
