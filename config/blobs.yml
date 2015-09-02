@@ -1,1 +1,6 @@
---- {}
+---
+bosh-init-deployment-resource/rootfs.tar:
+  object_id: 47b08925-f06f-4140-8ed1-bf692a3e482d
+  sha: !binary |-
+    MTZiMmMxMDAyMDkxOWNiZjQ4OTQxOTBiYThjZWU4NzZjODRjM2Q5NA==
+  size: 809704960
