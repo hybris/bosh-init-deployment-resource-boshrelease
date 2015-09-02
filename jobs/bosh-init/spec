@@ -1,8 +1,10 @@
 ---
 name: bosh-init
-templates: {}
 
 packages:
 - bosh-init
+
+templates:
+  empty: empty
 
 properties: {}
