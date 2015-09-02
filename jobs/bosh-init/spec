@@ -4,3 +4,5 @@ templates: {}
 
 packages:
 - bosh-init
+
+properties: {}
