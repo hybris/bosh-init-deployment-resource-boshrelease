@@ -1,0 +1,258 @@
+groups:
+  - name: build
+    jobs:
+      - testflight
+      - rc
+      - shipit
+  - name: version
+    jobs:
+      - patch
+      - minor
+      - major
+  - name: dependencies
+    jobs:
+      - build-ci-image
+      - build-blobs
+      - build-docker-resource-image
+
+jobs:
+  - name: testflight
+    public: true
+    serial: true
+    plan:
+      - do:
+        - aggregate:
+          - get: bosh-init-deployment-resource-boshrelease
+            resource: git-release
+          - get: git-release-changes
+            trigger: true
+        - task: create-release-and-deploy
+          config:
+            platform: linux
+            image: {{docker-hub-task-image}}
+            inputs:
+              - {name: bosh-init-deployment-resource-boshrelease}
+            run:
+              path: ./bosh-init-deployment-resource-boshrelease/ci/scripts/create_release_and_deploy.sh
+              args: []
+            params:
+              bosh_target: {{bosh-lite-build-target}}
+              bosh_username: {{bosh-lite-build-username}}
+              bosh_password: {{bosh-lite-build-password}}
+              bosh_deployment_name: {{bosh-lite-build-deployment-name}}
+
+  - name: rc
+    public: true
+    plan:
+      - aggregate:
+        - get: git-release
+          passed: [testflight]
+          trigger: true
+        - get: version
+          trigger: false
+          params: {bump: minor, pre: rc}
+      - put: version
+        params: {file: version/number}
+
+  - name: patch
+    public: true
+    plan:
+      - aggregate:
+        - get: version
+          trigger: false
+          params: {bump: patch}
+      - put: version
+        params: {file: version/number}
+
+  - name: minor
+    public: true
+    plan:
+      - aggregate:
+        - get: version
+          trigger: false
+          params: {bump: minor}
+      - put: version
+        params: {file: version/number}
+
+  - name: major
+    public: true
+    plan:
+      - aggregate:
+        - get: version
+          trigger: false
+          params: {bump: major}
+      - put: version
+        params: {file: version/number}
+
+  - name: shipit
+    public: true
+    serial: true
+    plan:
+      - aggregate:
+        - get: version
+          passed: [rc]
+          params: {bump: final}
+        - get: boshrelease
+          resource: git-release
+          passed: [rc]
+      - task: create-final-release
+        config:
+          platform: linux
+          image: {{docker-hub-task-image}}
+          inputs:
+          - {name: boshrelease, path: bosh-init-deployment-resource-boshrelease}
+          - {name: version}
+          run:
+            path: ./bosh-init-deployment-resource-boshrelease/ci/scripts/shipit.sh
+            args: []
+          params:
+            release_name: "bosh-init-deployment-resource BOSH Release"
+            bosh_target: {{bosh-lite-build-target}}
+            bosh_username: {{bosh-lite-build-username}}
+            bosh_password: {{bosh-lite-build-password}}
+            bosh_deployment_name: {{bosh-lite-build-deployment-name}}
+            aws_access_key_id: {{boshrelease-aws-access-key-id}}
+            aws_secret_access_key: {{boshrelease-aws-secret-access-key}}
+            promotion_branch: master
+      - put: git-release
+        params:
+          repository: create-final-release/bosh-init-deployment-resource-boshrelease
+          rebase: true
+      - aggregate:
+        - put: version
+          params: {file: version/number}
+        - put: final-release
+          params:
+            from: create-final-release/bosh-init-deployment-resource-boshrelease/releases/bosh-init-deployment-resource/bosh-init-deployment-resource-(.*).tgz
+            to: bosh-init-deployment-resource-boshrelease/
+        - put: git-release-final
+          params:
+            name: create-final-release/bosh-init-deployment-resource-boshrelease/release/name
+            tag: create-final-release/bosh-init-deployment-resource-boshrelease/release/tag
+            body: create-final-release/bosh-init-deployment-resource-boshrelease/release/notes.md
+            globs: [create-final-release/bosh-init-deployment-resource-boshrelease/releases/bosh-init-deployment-resource/bosh-init-deployment-resource-*.tgz]
+
+  - name: build-ci-image
+    public: true
+    serial: true
+    plan:
+      - get: git-release-image
+        trigger: true
+      - put: release-image
+        params:
+          build: git-release-image/ci/ci_image
+
+  - name: build-blobs
+    public: true
+    plan:
+      - aggregate:
+        - get: boshrelease
+          resource: git-release
+          trigger: false
+        - get: resource-image
+          passed: [build-docker-resource-image]
+          params: {rootfs: true}
+          trigger: false
+      - task: add-image-blob
+        config:
+          platform: linux
+          image: docker:///concourse/concourse-ci
+          inputs:
+            - {name: boshrelease, path: .}
+            - {name: resource-image}
+          run:
+            path: ./ci/scripts/embed_image_blob.sh
+            args: [resource-image, bosh-init-deployment-resource]
+          params:
+            access_key_id: {{boshrelease-aws-access-key-id}}
+            secret_access_key: {{boshrelease-aws-secret-access-key}}
+      - put: git-release
+        params:
+          repository: add-image-blob
+          rebase: true
+
+  - name: build-docker-resource-image
+    public: true
+    plan:
+      - get: bosh-init-deployment-resource
+        resource: git-resource
+        trigger: true
+      - put: resource-image
+        params:
+          build: bosh-init-deployment-resource
+
+resources:
+  - name: version
+    type: semver
+    source:
+      key: current-version
+      bucket: {{pipeline-aws-bucket}}
+      access_key_id: {{pipeline-aws-access-key-id}}
+      secret_access_key: {{pipeline-aws-secret-access-key}}
+      initial_version: 0.0.0
+
+  - name: final-release
+    type: s3
+    source:
+      bucket: {{boshrelease-aws-bucket}}
+      regexp: bosh-init-deployment-resource-boshrelease/bosh-init-deployment-resource-(.*).tgz
+      access_key_id: {{boshrelease-aws-access-key-id}}
+      secret_access_key: {{boshrelease-aws-secret-access-key}}
+
+  - name: git-resource
+    type: git
+    source:
+      uri: {{resource-git-repo}}
+      branch: {{resource-git-branch}}
+
+  - name: git-release
+    type: git
+    source:
+      uri: {{release-git-repo}}
+      branch: {{release-git-branch}}
+
+  - name: git-release-changes
+    type: git
+    source:
+      uri: {{release-git-repo}}
+      branch: {{release-git-branch}}
+      paths:
+        - src/**/*
+        - jobs/**/*
+        - packages/**/*
+        - config/blobs.yml
+        - .final_builds/**/*
+        - templates/**/*
+        - .gitmodules
+
+  - name: git-release-image
+    type: git
+    source:
+      uri: {{release-git-repo}}
+      branch: {{release-git-branch}}
+      paths: [ci/ci_image/*]
+
+  - name: git-release-final
+    type: github-release
+    source:
+      user: hybris
+      repository: bosh-init-deployment-resource-boshrelease
+      access_token: {{github-access-token}}
+
+  # docker image for building the release
+  - name: release-image
+    type: docker-image
+    source:
+      email: {{docker-hub-email}}
+      username: {{docker-hub-username}}
+      password: {{docker-hub-password}}
+      repository: {{docker-create-hub-task-image}}
+
+  # docker image for building the resource
+  - name: resource-image
+    type: docker-image
+    source:
+      email: {{docker-hub-email}}
+      username: {{docker-hub-username}}
+      password: {{docker-hub-password}}
+      repository: {{docker-create-hub-resource-image}}
