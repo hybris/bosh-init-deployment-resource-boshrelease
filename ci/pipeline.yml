@@ -11,11 +11,23 @@ groups:
       - major
   - name: dependencies
     jobs:
+      - unit-test
       - build-ci-image
       - build-blobs
       - build-docker-resource-image
 
 jobs:
+  - name: unit-test
+    public: true
+    serial: true
+    plan:
+      - do:
+        - aggregate:
+          - get: bosh-init-deployment-resource
+            resource: git-resource
+            trigger: true
+        - task: run-build-plan
+          file: bosh-init-deployment-resource/build.yml
   - name: testflight
     public: true
     serial: true
@@ -150,7 +162,7 @@ jobs:
           resource: git-release
           trigger: false
         - get: resource-image
-          passed: [build-docker-resource-image]
+          passed: [build-docker-resource-image, unit-test]
           params: {rootfs: true}
           trigger: false
       - task: add-image-blob
