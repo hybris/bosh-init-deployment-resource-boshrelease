@@ -11,7 +11,7 @@ update:
 jobs:
   - name: just_install_packages
     templates:
-    - name: install
+    - name: bosh-init
       release: bosh-init-deployment-resource
     instances: 1
     persistent_disk: 0
