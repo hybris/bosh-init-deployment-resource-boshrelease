@@ -1,6 +1,6 @@
 ---
 bosh-init-deployment-resource/rootfs.tar:
-  object_id: 47b08925-f06f-4140-8ed1-bf692a3e482d
+  object_id: 1e8c4972-f973-4202-b05b-1e45d96f6767
   sha: !binary |-
-    MTZiMmMxMDAyMDkxOWNiZjQ4OTQxOTBiYThjZWU4NzZjODRjM2Q5NA==
-  size: 809704960
+    YTFjNWE0MmIzYzhlY2U2M2E3MzY1ZWY0ZTQ3MWQyNWI1MWVmZjhkMg==
+  size: 809716224
