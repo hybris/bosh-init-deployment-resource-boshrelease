@@ -1,0 +1,22 @@
+---
+packages:
+- name: bosh-init
+  version: !binary |-
+    NjNiNzA3Mjc3YjllNzA5NTAwNjY3NWViZWI5M2QzOWFmYjMyMzViZQ==
+  fingerprint: !binary |-
+    NjNiNzA3Mjc3YjllNzA5NTAwNjY3NWViZWI5M2QzOWFmYjMyMzViZQ==
+  sha1: !binary |-
+    ZDFkMjIwZWY4NjVlY2FiZTk0ZTYxZWM2MzVhOTZmZTA5YzMzM2ZlNw==
+  dependencies: []
+jobs:
+- name: bosh-init
+  version: !binary |-
+    MmNlNGVkZmZmYzYwYzJhZjkxZmNmNjIzYjlhYzQ3NDU1OTc5YmU0Yg==
+  fingerprint: !binary |-
+    MmNlNGVkZmZmYzYwYzJhZjkxZmNmNjIzYjlhYzQ3NDU1OTc5YmU0Yg==
+  sha1: !binary |-
+    YjhiNGZkOTI0ZTI1MDE4ODAyNTI1YTU2NWM0ZDIzZDUwNDVlYWE3Nw==
+commit_hash: 849377c0
+uncommitted_changes: true
+name: bosh-init-deployment-resource
+version: 0.7.0
