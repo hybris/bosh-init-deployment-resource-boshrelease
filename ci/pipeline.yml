@@ -164,7 +164,7 @@ jobs:
         - get: resource-image
           passed: [build-docker-resource-image]
           params: {rootfs: true}
-          trigger: false
+          trigger: true
       - task: add-image-blob
         config:
           platform: linux
