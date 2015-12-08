@@ -47,14 +47,14 @@ jobs:
       resource_types:
       ...
       - type: bosh-init-deployment
-        image: /var/vcap/packages/bosh-init-deployment-resource
+        image: /var/vcap/packages/bosh-init
 ```
 
 Note that it is the latter two lines that are specific to this BOSH release:
 
 ```yaml
 - type: bosh-init-deployment
-  image: /var/vcap/packages/bosh-init-deployment-resource
+  image: /var/vcap/packages/bosh-init
 ```
 
 The former lines should be obtained from the Concourse BOSH release, not the documentation above which might be out of date. Use https://github.com/concourse/concourse/blob/master/jobs/groundcrew/spec#L69-L96
