@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 
 image_resource=$1; shift
 blob_name=$1; shift
@@ -37,6 +36,7 @@ blobstore:
     secret_access_key: ${secret_access_key}
 EOS
 
+cat config/private.yml
 set -ex
 
 mkdir -p blobs/${blob_name}
