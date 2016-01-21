@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 image_resource=$1; shift
 blob_name=$1; shift
 
