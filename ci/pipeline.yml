@@ -4,6 +4,9 @@ groups:
       - testflight
       - rc
       - shipit
+      - build-blobs
+      - build-docker-resource-image
+      - unit-test
   - name: version
     jobs:
       - patch
@@ -11,10 +14,7 @@ groups:
       - major
   - name: dependencies
     jobs:
-      - unit-test
       - build-ci-image
-      - build-blobs
-      - build-docker-resource-image
 
 jobs:
   - name: unit-test
